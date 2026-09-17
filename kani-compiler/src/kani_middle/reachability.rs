@@ -399,7 +399,11 @@ impl MirVisitor for MonoItemsFnCollector<'_, '_> {
         let allocation = match constant.const_.kind() {
             ConstantKind::Allocated(allocation) => allocation,
             ConstantKind::Unevaluated(_) => {
-                unreachable!("Instance with polymorphic constant: `{constant:?}`")
+                // Reached for e.g. portable-simd's `Swizzle::swizzle::{constant#0}` when
+                // std reachability visits instances whose constants still carry generic
+                // args. There is no allocation to collect yet; skip instead of ICE-ing.
+                debug!(?constant, "skipping unevaluated polymorphic constant");
+                return;
             }
             ConstantKind::Param(_) => unreachable!("Unexpected parameter constant: {constant:?}"),
             ConstantKind::ZeroSized => {

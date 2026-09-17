@@ -1540,6 +1540,18 @@ impl GotocCtx<'_, '_> {
         let arg2 = fargs.remove(0);
         let ret_typ = self.codegen_ty_stable(rust_ret_type);
 
+        // Scalar (non-vector) instantiations, e.g. `core_arch::simd::simd_imax::<i32>`
+        // reached by std autoharness generic instantiation, are invalid callers of SIMD
+        // comparison intrinsics. Emit an unsupported-construct assertion instead of ICE-ing.
+        if arg1.typ().len().is_none() || ret_typ.len().is_none() {
+            let loc = self.codegen_span_stable(span);
+            return self.codegen_unimplemented_stmt(
+                "SIMD comparison with non-vector operands",
+                loc,
+                "https://github.com/model-checking/kani/issues",
+            );
+        }
+
         if arg1.typ().len().unwrap() != ret_typ.len().unwrap() {
             let err_msg = format!(
                 "expected return type with length {} (same as input type `{}`), \

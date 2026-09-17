@@ -240,7 +240,9 @@ impl Intrinsic {
                 }
             }
             "catch_unwind" => {
-                assert_sig_matches!(sig, RigidTy::FnPtr(_), RigidTy::RawPtr(_, Mutability::Mut), RigidTy::FnPtr(_) => RigidTy::Int(IntTy::I32));
+                // nightly-2026-08-21's std no longer returns i32 here; the intrinsic is
+                // Unimplemented in Kani either way, so don't constrain the output type.
+                assert_sig_matches!(sig, RigidTy::FnPtr(_), RigidTy::RawPtr(_, Mutability::Mut), RigidTy::FnPtr(_) => _);
                 Self::Unimplemented {
                     name: intrinsic_str,
                     issue_link: "https://github.com/model-checking/kani/issues/267".into(),

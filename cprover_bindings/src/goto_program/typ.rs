@@ -1280,7 +1280,9 @@ impl Type {
 
     // `size` is the number of elements (e.g., a SIMD vector of 4 integers)
     pub fn vector(typ: Type, size: u64) -> Self {
-        assert!(typ.is_numeric());
+        // Pointer-element SIMD vectors (e.g. portable-simd's `Simd<*const T, N>`) are
+        // machine-scalar vectors too; allow them so std codegen doesn't ICE.
+        assert!(typ.is_numeric() || typ.is_pointer());
         Type::Vector { typ: Box::new(typ), size }
     }
 
