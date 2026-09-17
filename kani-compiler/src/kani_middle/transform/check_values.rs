@@ -956,10 +956,12 @@ pub fn ty_validity_per_offset(
         if base_ty.is_char() {
             return Err("Unsupported pattern type over `char`".to_string());
         }
-        assert!(
-            matches!(layout.abi, ValueAbi::Scalar(..)),
-            "expected pattern type to have a scalar ABI: {ty:?}"
-        );
+        // Pattern types over wide pointers (e.g. `NotNull` on `*const [T]` in
+        // nightly-2026-08-21's addr2line) have a ScalarPair ABI; reject them as
+        // unsupported instead of ICE-ing.
+        if !matches!(layout.abi, ValueAbi::Scalar(..)) {
+            return Err(format!("Unsupported pattern type with non-scalar ABI: {ty}"));
+        }
         return Ok(ty_req());
     }
     match layout.fields {
